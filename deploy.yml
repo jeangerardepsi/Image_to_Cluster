@@ -1,0 +1,48 @@
+---
+- name: Deploiement de l'image custom sur K3d
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Creer un Deployment Nginx
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: custom-nginx-deploy
+            namespace: default
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: my-nginx
+            template:
+              metadata:
+                labels:
+                  app: my-nginx
+              spec:
+                containers:
+                - name: nginx-container
+                  image: my-custom-nginx:latest
+                  imagePullPolicy: Never
+                  ports:
+                  - containerPort: 80
+
+    - name: Creer un Service LoadBalancer
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: custom-nginx-service
+            namespace: default
+          spec:
+            selector:
+              app: my-nginx
+            ports:
+              - protocol: TCP
+                port: 80
+                targetPort: 80
+            type: LoadBalancer
